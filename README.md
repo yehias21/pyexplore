@@ -1,140 +1,206 @@
-# PyExplore: Exploration Strategies for Deep Reinforcement Learning
+# PyExplore
 
-![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg) ![License](https://img.shields.io/badge/license-MIT-green.svg)
+A modular reinforcement learning framework for exploring different environments, models, and exploration strategies.
 
-**PyExplore** is a Python library inspired by recent advancements in exploration methods in Deep Reinforcement Learning (RL), facilitating the implementation and comparison of diverse exploration strategies, including both classical and advanced intrinsic motivation approaches.
+## Features
 
----
+- Modular architecture for easy extension
+- Support for different environments (currently MiniGrid)
+- Multiple exploration strategies (Epsilon-Greedy, Boltzmann, Count-Based)
+- Deep Q-Network (DQN) implementation
+- Experiment tracking with Comet.ml
+- Configuration-based setup
+- Easy training and evaluation
 
-## 🚀 Overview
+## Installation
 
-Effective exploration is critical in reinforcement learning, especially in scenarios with sparse rewards. This library provides implementations of multiple exploration strategies based on recent literature, simplifying experimentation and benchmarking.
-
-**PyExplore** includes:
-- Basic strategies: ε-greedy, Boltzmann Exploration
-- Intrinsic motivation strategies:
-  - **Intrinsic Curiosity Module (ICM)**
-  - **Random Network Distillation (RND)**
-  - **Count-based Exploration**
-
-This selection is inspired by the comprehensive survey paper:  
-> Pawel Ladosz, Lilian Weng, Minwoo Kim, Hyondong Oh. *Exploration in Deep Reinforcement Learning: A Survey* (2022).
-
----
-
-## 📂 Structure
-
-```
-pyexplore/
-├── pyexplore/          # Core library components
-│   ├── envs/           # Environment wrappers
-│   ├── exploration/    # Exploration strategies
-│   ├── models/         # Neural network architectures
-│   └── utils/          # Helpers and utilities
-├── examples/           # Example scripts for library usage
-├── tests/              # Unit tests
-├── setup.py            # Installation setup
-├── requirements.txt    # Project dependencies
-└── README.md
-```
-
----
-
-## ⚙️ Installation
-
-Clone and install the library locally:
-
+1. Clone the repository:
 ```bash
 git clone https://github.com/yourusername/pyexplore.git
 cd pyexplore
-pip install .
 ```
 
-Or install directly from source:
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+### Basic Usage
+
+Run training and evaluation with the default configuration:
 
 ```bash
-pip install git+https://github.com/yourusername/pyexplore.git
+python -m pyexplore.main --mode both
 ```
 
----
+### Using Custom Configuration
 
-## 🎯 Usage Example
+1. Create a configuration file (see `examples/config.json` for reference)
+2. Run with your configuration:
 
-Here's a simple usage example employing MiniGrid with the Intrinsic Curiosity Module (ICM):
+```bash
+python -m pyexplore.main --mode both --config path/to/your/config.json
+```
 
+### Example
+
+Run the MiniGrid example:
+
+```bash
+python examples/run_minigrid.py
+```
+
+## Configuration
+
+The framework uses a JSON-based configuration system. Here's an example configuration:
+
+```json
+{
+    "environment": {
+        "name": "minigrid",
+        "type": "MiniGridEnvironment",
+        "params": {
+            "grid_type": "MiniGrid-Empty-16x16-v0",
+            "max_steps": 1000
+        }
+    },
+    "model": {
+        "name": "dqn",
+        "type": "DQN",
+        "params": {
+            "hidden_layer_size": [128, 128]
+        }
+    },
+    "exploration": {
+        "name": "count_based",
+        "type": "CountBased",
+        "params": {
+            "beta": 0.1
+        }
+    },
+    "training": {
+        "episodes": 2000,
+        "batch_size": 128,
+        "target_update": 1000,
+        "gamma": 0.99,
+        "memory_size": 200000,
+        "learning_rate": 0.0005
+    },
+    "evaluation": {
+        "episodes": 1000,
+        "max_steps": 500
+    }
+}
+```
+
+## Extending the Framework
+
+### Adding a New Environment
+
+1. Create a new class inheriting from `BaseEnvironment`:
 ```python
-from pyexplore.envs import MiniGridEnv
-from pyexplore.exploration import ICMExplorer
-from pyexplore.models import PolicyNetwork
+from pyexplore.envs.base_env import BaseEnvironment
 
-# Set up environment and exploration strategy
-env = MiniGridEnv("MiniGrid-Empty-5x5-v0")
-strategy = ICMExplorer(state_dim=env.state_dim, action_dim=env.action_dim)
-policy_net = PolicyNetwork(env.state_dim, env.action_dim)
-
-state, _ = env.reset()
-done = False
-
-while not done:
-    q_values = policy_net.predict(state)
-    action = strategy.select_action(q_values, state)
-    next_state, reward, terminated, truncated, _ = env.step(action)
-    done = terminated or truncated
-
-    policy_net.update(state, action, reward, next_state, done)
-    state = next_state
+class NewEnvironment(BaseEnvironment):
+    def __init__(self, **params):
+        super().__init__()
+        # Initialize with params
+        
+    def create(self, **kwargs):
+        # Create and return environment
+        
+    def preprocess(self, observation, device):
+        # Preprocess observation
+        
+    def get_action_space(self):
+        # Return action space size
+        
+    def get_observation_space(self):
+        # Return observation space size
 ```
 
----
-
-## 📈 Benchmarking
-
-Experiments and comparison scripts are provided under the `examples/` directory to replicate and compare exploration strategies. Evaluate on benchmarks such as:
-- **MiniGrid** (recommended for sparse reward tasks)
-- **Atari** (e.g., Montezuma's Revenge)
-- **MuJoCo** (continuous control tasks)
-
-Run the provided scripts:
-
-```bash
-python examples/run_icm.py
-python examples/run_rnd.py
-python examples/run_baselines.py
+2. Add it to your configuration:
+```json
+{
+    "environment": {
+        "name": "new_env",
+        "type": "NewEnvironment",
+        "params": {
+            "param1": "value1",
+            "param2": "value2"
+        }
+    }
+}
 ```
 
----
+### Adding a New Model
 
-## 📚 References
+1. Create a new class inheriting from `BaseModel`:
+```python
+from pyexplore.models.base_model import BaseModel
 
-- **ICM**: Pathak et al. (2017). "Curiosity-driven Exploration by Self-supervised Prediction."
-- **RND**: Burda et al. (2018). "Exploration by Random Network Distillation."
-- **Count-based**: Bellemare et al. (2016). "Unifying Count-Based Exploration and Intrinsic Motivation."
-
-For a comprehensive understanding, refer to the original survey:
-
-> Pawel Ladosz et al. "Exploration in Deep Reinforcement Learning: A Survey," *Information Fusion*, 2022.
-
----
-
-## ✅ Testing
-
-Run tests with pytest:
-
-```bash
-pip install pytest
-pytest tests/
+class NewModel(BaseModel):
+    def __init__(self, input_size, output_size, **params):
+        super().__init__(input_size, output_size)
+        # Initialize model architecture
+        
+    def forward(self, x):
+        # Define forward pass
 ```
 
----
+2. Add it to your configuration:
+```json
+{
+    "model": {
+        "name": "new_model",
+        "type": "NewModel",
+        "params": {
+            "param1": "value1"
+        }
+    }
+}
+```
 
-## 🤝 Contributions
+### Adding a New Exploration Strategy
 
-Contributions are welcome! Please open issues or submit pull requests directly through GitHub.
+1. Create a new class inheriting from `BaseExplorationStrategy`:
+```python
+from pyexplore.exploration.base_strategy import BaseExplorationStrategy
 
----
+class NewStrategy(BaseExplorationStrategy):
+    def __init__(self, num_actions, device, **params):
+        super().__init__(num_actions, device)
+        # Initialize strategy parameters
+        
+    def select_action(self, state, policy_net, steps_done):
+        # Implement action selection logic
+```
 
-## 📜 License
+2. Add it to your configuration:
+```json
+{
+    "exploration": {
+        "name": "new_strategy",
+        "type": "NewStrategy",
+        "params": {
+            "param1": "value1"
+        }
+    }
+}
+```
 
-PyExplore is released under the MIT License. See [LICENSE](LICENSE) for more details.
+## Results
+
+[PLACEHOLDER: GIF of solved environment]
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 
