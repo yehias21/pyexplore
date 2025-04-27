@@ -2,6 +2,9 @@
 
 A modular reinforcement learning framework for exploring different environments, models, and exploration strategies.
 
+## Demo
+![image](https://github.com/user-attachments/assets/b3b427d9-38b4-4e02-9ab1-c1196da1a9f3)
+
 ## Features
 
 - Modular architecture for easy extension
@@ -190,10 +193,6 @@ class NewStrategy(BaseExplorationStrategy):
     }
 }
 ```
-
-## Results
-
-[PLACEHOLDER: GIF of solved environment]
 
 ## Contributing
 
