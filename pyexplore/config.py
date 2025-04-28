@@ -1,5 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, Any, Optional
+import torch
 
 @dataclass
 class EnvironmentConfig:
@@ -70,10 +71,18 @@ DEFAULT_CONFIG = {
         }
     },
     'exploration': {
-        'name': 'count_based',
-        'type': 'CountBased',
+        'name': 'epsilon_greedy',
+        'type': 'epsilon_greedy',
         'params': {
-            'beta': 0.1
+            'epsilon_start': 1.0,
+            'epsilon_end': 0.01,
+            'epsilon_decay': 10000,
+            'num_actions': 4,
+            'device': "cuda" if torch.cuda.is_available() else "cpu",
+            'input_size': 4,
+            'hidden_size': 128,
+            'beta': 0.1,
+            'learning_rate': 1e-4
         }
     },
     'training': {
